@@ -1,5 +1,5 @@
 import path from 'path';
-import { spawnSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 
 import { ProjectBuilder } from './project';
 
@@ -7,41 +7,78 @@ export interface Plugin {
   initialize(builder: ProjectBuilder): object;
 }
 
-export class Plugin {
-  static get(name: string): Plugin {
-    if (Plugin.isClowdy(name)) {
-      const basename = name.replace(/^@clowdy\//, '');
-      if (process.env.NODE_ENV === 'development') {
-        return require(path.resolve(
-          __dirname,
-          '..',
-          '..',
-          `plugin-${basename}`
-        )) as Plugin;
-      } else {
-        throw new Error('Not implemented, set "NODE_ENV=development" please');
-      }
+function isClowdy(name: string): boolean {
+  return name.startsWith('@clowdy/');
+}
+
+function packageBase(name: string): string {
+  return name.replace(/^@clowdy\//, '');
+}
+
+function clowdyPackageName(name: string): string {
+  return `@clowdy/plugin-${packageBase(name)}`;
+}
+
+let _node_modules: string;
+
+export const Plugin = {
+  get node_modules() {
+    if (!_node_modules) {
+      _node_modules = execSync('npm root -g')
+        .toString()
+        .trim();
+    }
+    return _node_modules;
+  },
+
+  get(name: string): Plugin {
+    if (!isClowdy(name)) {
+      throw new Error(
+        `Using plugin ${name}: Cannot use non-@clowdy plugins for now. Sorry!`
+      );
     }
 
-    const packageName = Plugin.packageName(name);
-    const pluginPath = path.resolve(process.cwd(), 'node_modules', packageName);
+    if (process.env.NODE_ENV === 'development') {
+      return require(path.resolve(
+        __dirname,
+        '..',
+        '..',
+        `plugin-${packageBase(name)}`
+      )) as Plugin;
+    }
+
+    const packagePath = path.resolve(
+      Plugin.node_modules,
+      clowdyPackageName(name)
+    );
 
     try {
-      require.resolve(pluginPath);
+      require.resolve(packagePath);
     } catch (err) {
       Plugin.install(name);
     }
 
-    return require(pluginPath) as Plugin;
-  }
+    return require(packagePath) as Plugin;
+  },
 
-  static install(name: string): void {
+  install(name: string): void {
+    if (!isClowdy(name)) {
+      throw new Error(
+        `Installing plugin ${name}: Cannot use non-@clowdy plugins for now. Sorry!`
+      );
+    }
+
     console.log(`Installing ${name} plugin...`);
 
-    const installName = Plugin.packageInstallName(name);
-    const res = spawnSync('yarn', ['add', '--dev', installName], {
-      cwd: process.cwd()
-    });
+    const res = spawnSync(
+      'npm',
+      ['install', '--global', '--parseable', clowdyPackageName(name)],
+      {
+        env: {
+          CI: '1'
+        }
+      }
+    );
 
     if (res.status !== 0 || res.error) {
       if (process.env.DEBUG) {
@@ -62,32 +99,4 @@ export class Plugin {
 
     console.log(`Installed ${name} plugin`);
   }
-
-  static isClowdy(name: string): boolean {
-    return name.startsWith('@clowdy/');
-  }
-
-  // @clowdy/foo => @clowdy/plugin-foo
-  // foo => clowdy-plugin-foo
-  static packageName(name: string): string {
-    if (name.startsWith('@clowdy/')) {
-      return `@clowdy/plugin-${name.replace(/^@clowdy\//, '')}`;
-    } else {
-      return `clowdy-plugin-${name}`;
-    }
-  }
-
-  static packageInstallName(name: string): string {
-    if (name.startsWith('@clowdy/')) {
-      const basename = name.replace(/^@clowdy\//, '');
-
-      if (process.env.NODE_ENV === 'development') {
-        return path.resolve(__dirname, '..', '..', `plugin-${basename}`);
-      } else {
-        return `@clowdy/plugin-${basename}`;
-      }
-    } else {
-      return `clowdy-plugin-${name}`;
-    }
-  }
-}
+};

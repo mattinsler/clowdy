@@ -1,3 +1,8 @@
+service('registry', {
+  image: 'verdaccio/verdaccio',
+  expose: [4873]
+});
+
 service('mongodb', {
   image: 'mongo:4.0',
   expose: [27017]
