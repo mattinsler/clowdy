@@ -13,12 +13,15 @@ import {
 import {
   ContainerAttachOptions,
   ContainerAttachStream,
+  ContainerExecOptions,
   ContainerListOptions,
   ContainerLogStream,
   ContainerLogsOptions,
   ContainerRemoveOptions,
   DockerEventReadable,
   DockerInfo,
+  ExecInspectInfo,
+  ExecStartOptions,
   EventsStreamOptions,
   ImageBuildOptions,
   ImageListOptions,
@@ -199,8 +202,11 @@ export const ClientImpl = {
       opts: Docker.ContainerCreateOptions
     ): Promise<Docker.ContainerInspectInfo> =>
       (await client.createContainer(opts)).inspect(),
-    // exec: (client: Docker, idOrName: string) =>
-    //   client.getContainer(idOrName).exec(),
+    exec: (
+      client: Docker,
+      idOrName: string,
+      opts: ContainerExecOptions = {}
+    ): Promise<{ id: string }> => client.getContainer(idOrName).exec(opts),
     inspect: (
       client: Docker,
       idOrName: string
@@ -302,6 +308,60 @@ export const ClientImpl = {
       (await client.getEvents(eventsStreamOptions(opts))).pipe(
         JSONStream.parse()
       ) as Promise<DockerEventReadable>
+  },
+
+  exec: {
+    inspect: (client: Docker, id: string): Promise<ExecInspectInfo> =>
+      client.getExec(id).inspect(),
+    resize: (
+      client: Docker,
+      id: string,
+      opts: { h: number; w: number }
+    ): Promise<void> => client.getExec(id).resize(opts),
+
+    start: async (client: Docker, id: string, opts: ExecStartOptions = {}) => {
+      if (opts.Detach) {
+        return client.getExec(id).start(opts);
+      }
+
+      const tty =
+        opts.Tty ||
+        (await ClientImpl.exec.inspect(client, id)).ProcessConfig.tty;
+
+      const attachStream = (await client.getExec(id).start({
+        ...opts,
+        hijack: true
+      })).output as NodeJS.ReadWriteStream;
+
+      const stderr = new PassThrough();
+      const stdin = new PassThrough();
+      const stdout = new PassThrough();
+      const stream = new PassThrough();
+
+      if (tty) {
+        attachStream.pipe(stdout);
+      } else {
+        client.modem.demuxStream(attachStream, stdout, stderr);
+      }
+
+      stderr.pipe(stream);
+      stdout.pipe(stream);
+      stdin.pipe(attachStream);
+
+      attachStream.on('end', () => {
+        stdin.end();
+        stderr.end();
+        stdout.end();
+        stream.end();
+
+        stdin.destroy();
+        stderr.destroy();
+        stdout.destroy();
+        stream.destroy();
+      });
+
+      return Object.assign(stream, { stderr, stdin, stdout });
+    }
   },
 
   info: (client: Docker): Promise<DockerInfo> => client.info(),

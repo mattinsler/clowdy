@@ -68,6 +68,8 @@ export class LocalConnectedClient implements ConnectedDockerClient {
       ensureConnected(this.client, ClientImpl.containers.attach, args),
     create: (...args: any[]) =>
       ensureConnected(this.client, ClientImpl.containers.create, args),
+    exec: (...args: any[]) =>
+      ensureConnected(this.client, ClientImpl.containers.exec, args),
     inspect: (...args: any[]) =>
       ensureConnected(this.client, ClientImpl.containers.inspect, args),
     kill: (...args: any[]) =>
@@ -93,6 +95,15 @@ export class LocalConnectedClient implements ConnectedDockerClient {
   events = {
     stream: (...args: any[]) =>
       ensureConnected(this.client, ClientImpl.events.stream, args)
+  };
+
+  exec = {
+    inspect: (...args: any[]) =>
+      ensureConnected(this.client, ClientImpl.exec.inspect, args),
+    resize: (...args: any[]) =>
+      ensureConnected(this.client, ClientImpl.exec.resize, args),
+    start: (...args: any[]) =>
+      ensureConnected(this.client, ClientImpl.exec.start, args)
   };
 
   info = (...args: any[]) =>

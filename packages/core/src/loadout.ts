@@ -17,12 +17,20 @@ export class Loadout {
     };
   }
 
-  static extend(loadout: Loadout, opts: Partial<Loadout>): Loadout {
+  static extend(loadout: Loadout, opts: Partial<Loadout> = {}): Loadout {
     return Loadout.from({
       expose: { ...loadout.expose, ...opts.expose },
       mode: { ...loadout.mode, ...opts.mode },
       services: Array.from(
         new Set([...loadout.services, ...(opts.services || [])])
+      )
+    });
+  }
+
+  static subtract(loadout: Loadout, opts: Partial<Loadout> = {}): Loadout {
+    return Loadout.from({
+      services: loadout.services.filter(
+        s => (opts.services || []).indexOf(s) === -1
       )
     });
   }

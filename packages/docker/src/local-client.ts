@@ -8,8 +8,10 @@ import {
   ContainerListOptions,
   ContainerLogsOptions,
   ContainerRemoveOptions,
+  ContainerExecOptions,
   DockerClient,
   EventsStreamOptions,
+  ExecStartOptions,
   ImageBuildOptions,
   ImageListOptions,
   NetworkCreateOptions,
@@ -54,6 +56,8 @@ export class LocalClient implements DockerClient {
       ClientImpl.containers.attach(this.client, idOrName, opts),
     create: (opts: Docker.ContainerCreateOptions) =>
       ClientImpl.containers.create(this.client, opts),
+    exec: (idOrName: string, opts?: ContainerExecOptions) =>
+      ClientImpl.containers.exec(this.client, idOrName, opts),
     inspect: (idOrName: string) =>
       ClientImpl.containers.inspect(this.client, idOrName),
     kill: (idOrName: string, signal?: string) =>
@@ -82,6 +86,14 @@ export class LocalClient implements DockerClient {
   events = {
     stream: (opts?: EventsStreamOptions) =>
       ClientImpl.events.stream(this.client, opts)
+  };
+
+  exec = {
+    inspect: (id: string) => ClientImpl.exec.inspect(this.client, id),
+    resize: (id: string, opts: { h: number; w: number }) =>
+      ClientImpl.exec.resize(this.client, id, opts),
+    start: (id: string, opts?: ExecStartOptions) =>
+      ClientImpl.exec.start(this.client, id, opts)
   };
 
   images = {

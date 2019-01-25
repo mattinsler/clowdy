@@ -28,6 +28,18 @@ export interface ContainerCreateOptions {
   };
 }
 
+export interface ContainerExecOptions {
+  AttachStdin?: boolean;
+  AttachStdout?: boolean;
+  AttachStderr?: boolean;
+  DetachKeys?: string;
+  Tty?: boolean;
+  Cmd?: string[];
+  Privileged?: boolean;
+  User?: string;
+  WorkingDir?: string;
+}
+
 export type ContainerLogsOptions = Omit<
   Docker.ContainerLogsOptions,
   'follow' | 'stderr' | 'stdout'
@@ -40,6 +52,31 @@ export interface ContainerRemoveOptions {
   force?: boolean;
   // Remove the specified link associated with the container.
   link?: boolean;
+}
+
+export interface ExecInspectInfo {
+  CanRemove: boolean;
+  DetachKeys: string;
+  ID: string;
+  Running: boolean;
+  ExitCode: number;
+  ProcessConfig: {
+    privileged: boolean;
+    user: string;
+    tty: boolean;
+    entrypoint: string;
+    arguments: string[];
+  };
+  OpenStdin: boolean;
+  OpenStderr: boolean;
+  OpenStdout: boolean;
+  ContainerID: string;
+  Pid: number;
+}
+
+export interface ExecStartOptions {
+  Detach?: boolean;
+  Tty?: boolean;
 }
 
 export interface ImageBuildOptions {
@@ -489,7 +526,10 @@ export interface DockerClient {
     create(
       opts: Docker.ContainerCreateOptions
     ): Promise<Docker.ContainerInspectInfo>;
-    // exec(idOrName: string, opts?: )
+    exec(
+      idOrName: string,
+      opts?: ContainerExecOptions
+    ): Promise<{ id: string }>;
     inspect(idOrName: string): Promise<Docker.ContainerInspectInfo>;
     kill(idOrName: string, signal?: string): Promise<void>;
     list(opts?: ContainerListOptions): Promise<Docker.ContainerInfo[]>;
@@ -513,6 +553,13 @@ export interface DockerClient {
 
   events: {
     stream(opts?: EventsStreamOptions): Promise<DockerEventReadable>;
+  };
+
+  exec: {
+    inspect(id: string): Promise<ExecInspectInfo>;
+    resize(id: string, opts: { h: number; w: number }): Promise<void>;
+    start(id: string, opts: ExecStartOptions & { Detach: true }): Promise<void>;
+    start(id: string, opts?: ExecStartOptions): Promise<ContainerAttachStream>;
   };
 
   images: {
