@@ -1,0 +1,27 @@
+service('server', plugin('nodejs').dev());
+
+/*
+
+$ yarn init -y
+$ echo "service('server', plugin('@clowdy/nodejs').dev());" > clowdy.config.js
+$ echo "console.log('Hello wordl!');" > index.js
+$ clowd dev server
+
+*/
+
+- proxies need to have a lifecycle so they can be planned and destroyed properly
+- plans need to be able to read from the cluster and be augmented (necessary for above proxy thing)
+
+
+== GOALS ==
+
+dead simple development for a new web service
+- kick off project with above steps
+- add dependencies with auto install and restart
+- maaaaybe active port exposure changing while dev is running? probably not... probably just kill dev and run it again
+- add tests and run with watch inside dev container (do we just add test through an exec or recreate the container?)
+- when happy, build a production container easily
+
+major stretch goal: take production build and launch on remote cluster
+  (i think this needs a lot more work... like haproxy or nginx to expose on a domain with https -- automatic letsencrypt?)
+  (maaaaybe this is a shitty shared domain with a hash to show your friends...)

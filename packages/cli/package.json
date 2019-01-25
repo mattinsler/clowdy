@@ -1,0 +1,45 @@
+{
+  "name": "@clowdy/cli",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "license": "MIT",
+  "scripts": {},
+  "bin": {
+    "clowdy": "./bin/run"
+  },
+  "dependencies": {
+    "@clowdy/core": "*",
+    "@oclif/command": "1.5.8",
+    "@oclif/config": "1.10.4",
+    "@oclif/plugin-help": "2.1.4",
+    "@oclif/plugin-not-found": "1.2.2",
+    "chalk": "2.4.1",
+    "cli-ux": "5.0.0",
+    "fs-extra": "7.0.1",
+    "inquirer": "6.2.1",
+    "log-update": "2.3.0",
+    "load-json-file": "5.1.0",
+    "moment": "2.23.0",
+    "prettysize": "2.0.0",
+    "restore-cursor": "2.0.0"
+  },
+  "devDependencies": {
+    "@oclif/dev-cli": "1.21.0",
+    "@oclif/test": "1.2.2",
+    "@types/inquirer": "0.0.43",
+    "globby": "8.0.1"
+  },
+  "oclif": {
+    "commands": "./dist/commands",
+    "bin": "clowdy",
+    "plugins": [
+      "@oclif/plugin-help",
+      "@oclif/plugin-not-found"
+    ]
+  },
+  "files": [
+    "bin",
+    "dist"
+  ]
+}

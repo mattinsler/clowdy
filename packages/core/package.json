@@ -1,0 +1,30 @@
+{
+  "name": "@clowdy/core",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "@clowdy/docker": "*",
+    "cli-ux": "5.0.0",
+    "execa": "1.0.0",
+    "fs-extra": "7.0.1",
+    "js-yaml": "3.12.0",
+    "JSONStream": "1.3.5",
+    "lodash": "4.17.11",
+    "object-hash": "1.3.1",
+    "tar-fs": "1.16.3"
+  },
+  "devDependencies": {
+    "@types/execa": "0.9.0",
+    "@types/fs-extra": "5.0.4",
+    "@types/js-yaml": "3.11.4",
+    "@types/lodash": "4.14.120",
+    "@types/object-hash": "1.2.0",
+    "@types/tar-fs": "1.16.1",
+    "@types/tar-stream": "1.6.0"
+  }
+}

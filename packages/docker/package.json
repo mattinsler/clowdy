@@ -1,0 +1,18 @@
+{
+  "name": "@clowdy/docker",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "license": "MIT",
+  "dependencies": {
+    "dockerode": "2.5.7",
+    "execa": "1.0.0",
+    "JSONStream": "1.3.5",
+    "ssh2": "0.6.1"
+  },
+  "devDependencies": {
+    "@types/dockerode": "2.5.10",
+    "@types/execa": "0.9.0",
+    "@types/ssh2": "0.5.37"
+  }
+}

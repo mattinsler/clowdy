@@ -1,0 +1,10 @@
+{
+  "exclude": ["commands.old"],
+  "extends": "../tsconfig.settings.json",
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "references": [{ "path": "../core" }]
+}
