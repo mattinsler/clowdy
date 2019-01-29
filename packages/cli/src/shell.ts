@@ -1,10 +1,10 @@
 import { ContainerExecOptions } from '@clowdy/docker';
-import { Cluster, LABELS, dockerClient } from '@clowdy/core';
+import { LABELS, Schematic, dockerClient } from '@clowdy/core';
 
 export const Shell = {
   async toContainer(
     idOrName: string,
-    cluster: Cluster,
+    cluster: Schematic.Cluster,
     opts?: Partial<ContainerExecOptions>
   ): Promise<void> {
     const client = dockerClient(cluster);
@@ -38,7 +38,7 @@ export const Shell = {
   async toService(
     service: string,
     project: string,
-    cluster: Cluster,
+    cluster: Schematic.Cluster,
     opts?: Partial<ContainerExecOptions>
   ): Promise<void> {
     const client = dockerClient(cluster);

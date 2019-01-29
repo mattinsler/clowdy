@@ -106,7 +106,8 @@ export class LocalClient implements DockerClient {
     listAndInspect: (opts?: ImageListOptions) =>
       ClientImpl.images.listAndInspect(this.client, opts),
     remove: (idOrName: string, opts?: { force?: boolean; noprune?: boolean }) =>
-      ClientImpl.images.remove(this.client, idOrName, opts)
+      ClientImpl.images.remove(this.client, idOrName, opts),
+    pull: (name: string) => ClientImpl.images.pull(this.client, name)
   };
 
   info = () => ClientImpl.info(this.client);

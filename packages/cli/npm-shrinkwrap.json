@@ -1,0 +1,32 @@
+{
+  "name": "@clowdy/cli",
+  "version": "0.0.5",
+  "lockfileVersion": 1,
+  "requires": true,
+  "dependencies": {
+    "ansi-regex": {
+      "version": "4.0.0"
+    },
+    "chalk": {
+      "version": "2.4.1"
+    },
+    "cli-ux": {
+      "version": "5.0.0",
+      "requires": {
+        "chalk": "^2.4.1",
+        "strip-ansi": "^5.0.0"
+      },
+      "dependencies": {
+        "chalk": {
+          "version": "2.4.2"
+        }
+      }
+    },
+    "strip-ansi": {
+      "version": "5.0.0",
+      "requires": {
+        "ansi-regex": "^4.0.0"
+      }
+    }
+  }
+}

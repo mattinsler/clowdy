@@ -1,20 +1,36 @@
 import { EOL } from 'os';
 import { color } from '@oclif/color';
 import { flags } from '@oclif/command';
-import {
-  Blueprint,
-  ClusterState,
-  ExecutionPlan,
-  Executor,
-  Loadout
-} from '@clowdy/core';
+import { Blueprint, ClusterState, ExecutionPlan, Executor, Loadout } from '@clowdy/core';
 
 import { Attach } from '../attach';
 import { BaseCommand } from '../base-command';
 import { PlanPrinter } from '../plan-printer';
 
 export class DevCommand extends BaseCommand {
-  static description = 'run a service in dev mode';
+  static description = `run a service in dev mode
+
+Launch a service in dev mode.
+
+${color.underline('Detaching from the container')}
+To detach from the process without effecting the underlying process, press
+${color.magenta('control-d')}.
+
+${color.underline('Show plan')}
+Use the ${color.magenta('-p')} flag to see what it will do without actually
+performing the steps.`;
+
+  static examples = [
+    color.gray('launch the api service in dev mode'),
+    '$ clowdy dev api',
+    '',
+    color.gray('launch the api service in dev mode, expose all ports and attach to'),
+    color.gray('the container'),
+    '$ clowdy dev api -aE',
+    '',
+    color.gray('launch the api service in dev mode and expose ports 3000 and 5000'),
+    '$ clowdy dev api -e 3000 -e 5000'
+  ];
 
   static args = [{ name: 'service', required: true }];
 
@@ -22,20 +38,23 @@ export class DevCommand extends BaseCommand {
     ...BaseCommand.flags,
     attach: flags.boolean({
       char: 'a',
-      default: false
+      default: false,
+      description: 'Attach to the container after it starts running'
     }),
     expose: flags.integer({
       char: 'e',
-      multiple: true,
-      exclusive: ['expose-all']
+      description: 'Expose a port from this service on localhost',
+      exclusive: ['expose-all'],
+      multiple: true
     }),
     'expose-all': flags.boolean({
       char: 'E',
+      description: 'Expose all ports from this service on localhost',
       exclusive: ['expose']
     }),
     plan: flags.boolean({
       char: 'p',
-      exclusive: ['attach']
+      description: "Print the plan but don't perform actions"
     })
   };
 
@@ -75,10 +94,7 @@ export class DevCommand extends BaseCommand {
         });
       }
 
-      const plan = ExecutionPlan.from(
-        state,
-        Blueprint.from(this.project, desired)
-      );
+      const plan = ExecutionPlan.from(state, Blueprint.from(this.project, desired));
 
       if (flags.plan === true) {
         PlanPrinter.print(plan);
@@ -91,7 +107,18 @@ export class DevCommand extends BaseCommand {
         await Attach.toService(args.service, this.project.name, this.cluster);
       }
     } catch (err) {
-      console.log(err.stack);
+      this.error(
+        [
+          err.message,
+          '',
+          'Services available for dev:',
+          ...Array.from(this.project.services.values())
+            .filter(s => s.mode === 'dev')
+            .sort()
+            .map(s => `  ${color.cyan(s.name)}`),
+          ''
+        ].join(EOL)
+      );
     }
   }
 }

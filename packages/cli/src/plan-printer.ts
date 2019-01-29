@@ -35,6 +35,10 @@ function formatPlanAction(action: ExecutionPlan.Action) {
           return `  ${color.red('Destroy')} image ${color.magenta(
             action.payload.image.name
           )}`;
+        case 'Pull':
+          return `  ${color.blueBright('Pull')} image ${color.magenta(
+            action.payload.image
+          )}`;
         default:
           throw new Error();
       }

@@ -74,4 +74,35 @@ export class Image {
   ): Promise<void> {
     await client.images.remove(image.info.Id, { force: true });
   }
+
+  static async pull(
+    client: DockerClient,
+    image: string
+  ): Promise<Docker.ImageInspectInfo> {
+    try {
+      return client.images.inspect(image);
+    } catch (err) {
+      // ignore
+    }
+
+    const pullStream = (await client.images.pull(image)).pipe(
+      JSONStream.parse()
+    );
+
+    pullStream.on('data', data => {
+      const { stream } = data;
+      if (stream) {
+        // might need to stream this somewhere else, not to stdout
+        if (process.env.DEBUG) {
+          process.stdout.write(stream);
+        }
+      }
+    });
+
+    await new Promise(resolve => {
+      pullStream.on('end', resolve);
+    });
+
+    return client.images.inspect(image);
+  }
 }

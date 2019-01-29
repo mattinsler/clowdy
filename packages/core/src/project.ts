@@ -23,7 +23,7 @@ export interface ProjectBuilder {
 
   plugin(name: string): object;
 
-  readonly project: Project;
+  project(name: string): void;
 
   service(name: string, opts: ProjectBuilder.ServiceOptions): Schematic.Service;
   service(
@@ -35,22 +35,27 @@ export interface ProjectBuilder {
   volume(name: string): Schematic.Volume;
 }
 
+interface ProjectBuilderInternal extends ProjectBuilder {
+  getProject(): Project;
+}
+
 export namespace ProjectBuilder {
   export interface ServiceOptions {
     command: string | string[];
+    cwd?: string;
     environment?: { [key: string]: string };
     expose?: number[];
-    hooks?: { [name: string]: string };
+    // hooks?: { [name: string]: string };
     image: string;
     links?: { [alias: string]: string };
-    ports?: { [externalPort: string]: string | number };
-    scripts?: { [name: string]: string };
+    // ports?: { [externalPort: string]: string | number };
+    // scripts?: { [name: string]: string };
     volumes?: { [containerPath: string]: Schematic.Volume | string };
   }
 }
 
-function projectBuilder(name: string): ProjectBuilder {
-  let builder: ProjectBuilder;
+function projectBuilder(name: string): ProjectBuilderInternal {
+  let builder: ProjectBuilderInternal;
 
   const clusters = new Map<string, Schematic.Cluster>();
   const images = new Map<string, Schematic.Image>();
@@ -98,6 +103,10 @@ function projectBuilder(name: string): ProjectBuilder {
     return schematic;
   }
 
+  function project(projectName: string) {
+    name = projectName;
+  }
+
   function service(name: string, ...args: any[]) {
     const [mode, opts] = ((): [
       Schematic.Mode,
@@ -118,11 +127,16 @@ function projectBuilder(name: string): ProjectBuilder {
       );
     }
 
+    if (!/:[^:\/]+$/.exec(opts.image)) {
+      opts.image = `${opts.image}:latest`;
+    }
+
     const schematic: Schematic.Service = {
       command: (Array.isArray(opts.command)
         ? opts.command
         : [opts.command]
       ).filter(a => a),
+      cwd: opts.cwd,
       environment: opts.environment || {},
       expose: opts.expose || [],
       image: opts.image,
@@ -152,7 +166,8 @@ function projectBuilder(name: string): ProjectBuilder {
   builder = {
     image,
     plugin,
-    get project(): Project {
+    project,
+    getProject(): Project {
       return {
         clusters,
         images,
@@ -247,6 +262,6 @@ export class Project {
       { filename: filename }
     );
 
-    return builder.project;
+    return builder.getProject();
   }
 }

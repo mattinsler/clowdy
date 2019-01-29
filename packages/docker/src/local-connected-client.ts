@@ -119,7 +119,9 @@ export class LocalConnectedClient implements ConnectedDockerClient {
     listAndInspect: (...args: any[]) =>
       ensureConnected(this.client, ClientImpl.images.listAndInspect, args),
     remove: (...args: any[]) =>
-      ensureConnected(this.client, ClientImpl.images.remove, args)
+      ensureConnected(this.client, ClientImpl.images.remove, args),
+    pull: (...args: any[]) =>
+      ensureConnected(this.client, ClientImpl.images.pull, args)
   };
 
   networks = {

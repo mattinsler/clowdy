@@ -58,6 +58,10 @@ export const Service = {
       opts.Cmd = service.config.command;
     }
 
+    if (service.config.cwd) {
+      opts.WorkingDir = service.config.cwd;
+    }
+
     if (Object.keys(service.config.environment).length > 0) {
       opts.Env = Object.entries(service.config.environment).map(
         ([k, v]) => `${k}=${v}`

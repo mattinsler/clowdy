@@ -40,6 +40,10 @@ export const Executor = {
                   `Destroying image ${action.payload.image.name}`,
                   () => Execution.Image.destroy(client, action.payload.image)
                 );
+              case 'Pull':
+                return report(`Pulling image ${action.payload.image}`, () =>
+                  Execution.Image.pull(client, action.payload.image)
+                );
               default:
                 throw new Error();
             }

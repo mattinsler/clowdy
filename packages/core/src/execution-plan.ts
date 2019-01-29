@@ -156,6 +156,10 @@ export class ExecutionPlan {
     const createImages = shouldCreate(state.images, blueprint.images);
     actions.push(...createImages.map(ExecutionPlan.Action.Image.build));
 
+    actions.push(
+      ...blueprint.externalImages.map(ExecutionPlan.Action.Image.pull)
+    );
+
     // volumes
     // actions.push(
     //   ...diffs.volumes.create.map(ExecutionPlan.Action.Volume.create)
@@ -267,6 +271,11 @@ export namespace ExecutionPlan {
         resource: 'Image';
         type: 'Destroy';
       }
+      export interface Pull {
+        payload: { image: string };
+        resource: 'Image';
+        type: 'Pull';
+      }
       export const build = (image: Blueprint.Image): Image.Build => ({
         payload: { image },
         resource: 'Image',
@@ -277,8 +286,13 @@ export namespace ExecutionPlan {
         resource: 'Image',
         type: 'Destroy'
       });
+      export const pull = (image: string): Image.Pull => ({
+        payload: { image },
+        resource: 'Image',
+        type: 'Pull'
+      });
     }
-    export type Image = Image.Build | Image.Destroy;
+    export type Image = Image.Build | Image.Destroy | Image.Pull;
 
     export namespace Network {
       export interface Create {

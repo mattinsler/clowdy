@@ -1,6 +1,6 @@
 import { EOL } from 'os';
 import * as tar from 'tar-stream';
-import { Cluster, Service, dockerClient } from '@clowdy/core';
+import { Schematic, dockerClient } from '@clowdy/core';
 
 function createHaproxyConfig(name: string, ports: number[]) {
   const lines = [
@@ -30,8 +30,8 @@ function createHaproxyConfig(name: string, ports: number[]) {
 export class Proxy {
   static async create(
     project: string,
-    service: Service,
-    cluster: Cluster,
+    service: Schematic.Service,
+    cluster: Schematic.Cluster,
     ports?: number[]
   ) {
     ports =
@@ -98,7 +98,11 @@ export class Proxy {
     await client.containers.start(Id);
   }
 
-  static async destroy(project: string, service: Service, cluster: Cluster) {
+  static async destroy(
+    project: string,
+    service: Schematic.Service,
+    cluster: Schematic.Cluster
+  ) {
     const client = dockerClient(cluster);
 
     const containers = await client.containers.list({

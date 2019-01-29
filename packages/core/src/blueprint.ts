@@ -2,6 +2,7 @@ import ObjectHash from 'object-hash';
 
 import { Loadout } from './loadout';
 import { Project } from './project';
+import { Execution } from './execution';
 import { Schematic } from './schematic';
 import { ClusterState } from './cluster-state';
 
@@ -14,6 +15,7 @@ type Resource<ResourceType extends string> = {
 
 export interface Blueprint {
   images: Blueprint.Image[];
+  externalImages: string[];
   networks: Blueprint.Network[];
   project: string;
   proxies: Blueprint.Proxy[];
@@ -67,6 +69,7 @@ export class Blueprint {
     state?: ClusterState
   ): Blueprint {
     const images: { [name: string]: Blueprint.Image } = {};
+    const externalImages = new Set<string>();
     const networks: { [name: string]: Blueprint.Network } = {};
     const proxies: { [name: string]: Blueprint.Proxy } = {};
     const services: { [name: string]: Blueprint.Service } = {};
@@ -84,6 +87,8 @@ export class Blueprint {
           project.images.get(service.image),
           project.name
         );
+      } else {
+        externalImages.add(service.image);
       }
 
       for (const volume of Object.values(service.volumes)) {
@@ -103,6 +108,8 @@ export class Blueprint {
             expose,
             project.name
           );
+
+          externalImages.add(Execution.Proxy.IMAGE);
         }
       }
     }
@@ -113,6 +120,7 @@ export class Blueprint {
 
     return {
       images: Object.values(images),
+      externalImages: Array.from(externalImages),
       networks: Object.values(networks),
       project: project.name,
       proxies: Object.values(proxies),
@@ -225,6 +233,7 @@ export namespace Blueprint {
   export namespace Service {
     export interface Config {
       command: string[];
+      cwd: string;
       environment: { [name: string]: string };
       expose: number[];
       image: string;
@@ -242,6 +251,7 @@ export namespace Blueprint {
     static from(schematic: Schematic.Service, project: string): Service {
       const config: Service.Config = {
         command: schematic.command,
+        cwd: schematic.cwd,
         environment: schematic.environment,
         expose: schematic.expose,
         image: schematic.image,

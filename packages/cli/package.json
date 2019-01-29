@@ -1,24 +1,27 @@
 {
   "name": "@clowdy/cli",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "license": "MIT",
   "scripts": {
-    "prepack": "oclif-dev manifest",
+    "pack:macos": "oclif-dev pack:macos",
+    "prepack": "oclif-dev manifest >/dev/null",
     "postpack": "rm -f oclif.manifest.json"
   },
   "bin": {
     "clowdy": "./bin/run"
   },
   "dependencies": {
-    "@clowdy/core": "0.0.1",
+    "@clowdy/core": "0.0.4",
     "@oclif/command": "1.5.8",
     "@oclif/config": "1.10.4",
     "@oclif/plugin-help": "2.1.4",
     "@oclif/plugin-not-found": "1.2.2",
+    "byline": "5.0.0",
     "chalk": "2.4.1",
     "cli-ux": "5.0.0",
+    "color-hash": "1.0.3",
     "fs-extra": "7.0.1",
     "load-json-file": "5.1.0",
     "moment": "2.23.0",
@@ -36,7 +39,10 @@
     "plugins": [
       "@oclif/plugin-help",
       "@oclif/plugin-not-found"
-    ]
+    ],
+    "macos": {
+      "identifier": "com.awesome-labs.clowdy"
+    }
   },
   "files": [
     "bin",

@@ -5,14 +5,13 @@
   ],
   "scripts": {
     "build": "tsc -b",
-    "clean": "rimraf packages/**/dist",
-    "clean:modules": "rimraf node_modules packages/**/node_modules"
+    "clean": "find packages -name dist | xargs rm -rf",
+    "clean:modules": "(find . -name node_modules -depth 1 | xargs rm -rf) && (find . -name node_modules -depth 3 | xargs rm -rf)"
   },
   "devDependencies": {
     "@types/jest": "23.3.12",
     "@types/node": "10.12.18",
     "jest": "23.6.0",
-    "rimraf": "2.6.2",
     "ts-jest": "23.10.5",
     "ts-node": "7.0.1",
     "typescript": "3.2.2"

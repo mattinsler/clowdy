@@ -394,7 +394,9 @@ export const ClientImpl = {
       client: Docker,
       idOrName: string,
       opts?: { force?: boolean; noprune?: boolean }
-    ): Promise<void> => client.getImage(idOrName).remove(opts)
+    ): Promise<void> => client.getImage(idOrName).remove(opts),
+    pull: (client: Docker, name: string, opts = {}): Promise<Readable> =>
+      client.pull(name, opts) as Promise<Readable>
   },
 
   networks: {

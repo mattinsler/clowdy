@@ -1,11 +1,5 @@
 import { flags } from '@oclif/command';
-import {
-  Blueprint,
-  ClusterState,
-  ExecutionPlan,
-  Executor,
-  Loadout
-} from '@clowdy/core';
+import { Blueprint, ClusterState, ExecutionPlan, Executor, Loadout } from '@clowdy/core';
 
 import { BaseCommand } from '../base-command';
 import { PlanPrinter } from '../plan-printer';
@@ -18,7 +12,8 @@ export class StartCommand extends BaseCommand {
   static flags: flags.Input<any> = {
     ...BaseCommand.flags,
     plan: flags.boolean({
-      char: 'p'
+      char: 'p',
+      description: "Print the plan but don't perform actions"
     })
   };
 
@@ -31,10 +26,7 @@ export class StartCommand extends BaseCommand {
         services: [args.service]
       });
 
-      const plan = ExecutionPlan.from(
-        state,
-        Blueprint.from(this.project, desired)
-      );
+      const plan = ExecutionPlan.from(state, Blueprint.from(this.project, desired));
 
       if (flags.plan === true) {
         PlanPrinter.print(plan);

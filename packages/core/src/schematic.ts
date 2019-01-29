@@ -56,6 +56,7 @@ export namespace Schematic {
     type: 'Service';
 
     command: string[];
+    cwd: string;
     environment: {
       // key => value
       [key: string]: string;

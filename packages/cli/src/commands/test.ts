@@ -1,27 +1,35 @@
 import { EOL } from 'os';
 import { color } from '@oclif/color';
 import { flags } from '@oclif/command';
-import {
-  Blueprint,
-  ClusterState,
-  ExecutionPlan,
-  Executor,
-  Loadout
-} from '@clowdy/core';
+import { Blueprint, ClusterState, ExecutionPlan, Executor, Loadout } from '@clowdy/core';
 
 import { Attach } from '../attach';
 import { BaseCommand } from '../base-command';
 import { PlanPrinter } from '../plan-printer';
 
 export class TestCommand extends BaseCommand {
-  static description = 'run a service in test mode';
+  static description = `run a service in test mode
+  
+Launch a service in test mode. Test mode will automatically attach to the
+container after launching. Test mode can not expose any ports.
+
+${color.underline('Detaching from the container')}
+To detach from the process without effecting the underlying process, press
+${color.magenta('control-d')}.
+
+${color.underline('Show plan')}
+Use the ${color.magenta('-p')} flag to see what it will do without actually
+performing the steps.`;
+
+  static examples = [color.gray('launch the api service for test'), '$ clowdy test api'];
 
   static args = [{ name: 'service', required: true }];
 
   static flags: flags.Input<any> = {
     ...BaseCommand.flags,
     plan: flags.boolean({
-      char: 'p'
+      char: 'p',
+      description: "Print the plan but don't perform actions"
     })
   };
 
@@ -51,10 +59,7 @@ export class TestCommand extends BaseCommand {
         services: [args.service]
       });
 
-      const plan = ExecutionPlan.from(
-        state,
-        Blueprint.from(this.project, desired)
-      );
+      const plan = ExecutionPlan.from(state, Blueprint.from(this.project, desired));
 
       if (flags.plan === true) {
         PlanPrinter.print(plan);
@@ -67,7 +72,18 @@ export class TestCommand extends BaseCommand {
         logs: false
       });
     } catch (err) {
-      console.log(err.stack);
+      this.error(
+        [
+          err.message,
+          '',
+          'Services available for test:',
+          ...Array.from(this.project.services.values())
+            .filter(s => s.mode === 'test')
+            .sort()
+            .map(s => `  ${color.cyan(s.name)}`),
+          ''
+        ].join(EOL)
+      );
     }
   }
 }

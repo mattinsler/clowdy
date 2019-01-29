@@ -33,6 +33,8 @@ function createHaproxyConfig(name: string, ports: number[]) {
 }
 
 export const Proxy = {
+  IMAGE: 'haproxy:1.9-alpine',
+
   create: async (
     client: DockerClient,
     proxy: Blueprint.Proxy
@@ -55,7 +57,7 @@ export const Proxy = {
           return o;
         }, {})
       },
-      Image: 'haproxy:1.9-alpine',
+      Image: Proxy.IMAGE,
       Labels: {
         [LABELS.expose]: JSON.stringify(proxy.config.expose),
         [LABELS.hash]: proxy.hash,

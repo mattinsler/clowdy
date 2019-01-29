@@ -571,6 +571,7 @@ export interface DockerClient {
       idOrName: string,
       opts?: { force?: boolean; noprune?: boolean }
     ): Promise<void>;
+    pull(name: string): Promise<Readable>;
   };
 
   info(): Promise<DockerInfo>;
