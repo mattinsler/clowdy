@@ -10,14 +10,8 @@ import { Blueprint } from '../blueprint';
 import { ClusterState } from '../cluster-state';
 
 export class Image {
-  static async build(
-    client: DockerClient,
-    image: Blueprint.Image
-  ): Promise<Docker.ImageInspectInfo> {
-    if (
-      !fs.existsSync(image.config.context) ||
-      !fs.statSync(image.config.context).isDirectory()
-    ) {
+  static async build(client: DockerClient, image: Blueprint.Image): Promise<Docker.ImageInspectInfo> {
+    if (!fs.existsSync(image.config.context) || !fs.statSync(image.config.context).isDirectory()) {
       throw new Error(`${image.config.context} is not a directory`);
     }
 
@@ -48,7 +42,7 @@ export class Image {
         [LABELS.name]: image.name,
         [LABELS.hash]: image.hash
       }),
-      t: `${image.project}_${image.name}`
+      t: image.name
     })).pipe(JSONStream.parse());
 
     buildStream.on('data', data => {
@@ -65,29 +59,21 @@ export class Image {
       buildStream.on('end', resolve);
     });
 
-    return client.images.inspect(`${image.project}_${image.name}`);
+    return client.images.inspect(image.name);
   }
 
-  static async destroy(
-    client: DockerClient,
-    image: ClusterState.Image
-  ): Promise<void> {
+  static async destroy(client: DockerClient, image: ClusterState.Image): Promise<void> {
     await client.images.remove(image.info.Id, { force: true });
   }
 
-  static async pull(
-    client: DockerClient,
-    image: string
-  ): Promise<Docker.ImageInspectInfo> {
+  static async pull(client: DockerClient, image: string): Promise<Docker.ImageInspectInfo> {
     try {
       return client.images.inspect(image);
     } catch (err) {
       // ignore
     }
 
-    const pullStream = (await client.images.pull(image)).pipe(
-      JSONStream.parse()
-    );
+    const pullStream = (await client.images.pull(image)).pipe(JSONStream.parse());
 
     pullStream.on('data', data => {
       const { stream } = data;

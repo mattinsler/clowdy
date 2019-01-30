@@ -5,11 +5,7 @@ import { LABELS } from '../labels';
 import { Blueprint } from '../blueprint';
 import { ClusterState } from '../cluster-state';
 
-async function getImageId(
-  client: DockerClient,
-  image: string,
-  project: string
-): Promise<string> {
+async function getImageId(client: DockerClient, image: string, project: string): Promise<string> {
   const list = await client.images.list({
     filters: {
       label: {
@@ -23,15 +19,8 @@ async function getImageId(
 }
 
 export const Service = {
-  create: async (
-    client: DockerClient,
-    service: Blueprint.Service
-  ): Promise<Docker.ContainerInspectInfo> => {
-    const image = await getImageId(
-      client,
-      service.config.image,
-      service.project
-    );
+  create: async (client: DockerClient, service: Blueprint.Service): Promise<Docker.ContainerInspectInfo> => {
+    const image = await getImageId(client, service.config.image, service.project);
 
     const opts: Docker.ContainerCreateOptions = {
       AttachStderr: true,
@@ -63,9 +52,7 @@ export const Service = {
     }
 
     if (Object.keys(service.config.environment).length > 0) {
-      opts.Env = Object.entries(service.config.environment).map(
-        ([k, v]) => `${k}=${v}`
-      );
+      opts.Env = Object.entries(service.config.environment).map(([k, v]) => `${k}=${v}`);
     }
 
     if (service.config.expose.length > 0) {
@@ -110,39 +97,28 @@ export const Service = {
       opts.HostConfig.Binds = [];
       opts.Volumes = {};
 
-      for (const [containerPath, volume] of Object.entries(
-        service.config.volumes
-      )) {
+      for (const [containerPath, volume] of Object.entries(service.config.volumes)) {
         opts.HostConfig.Binds.push(
-          `${
-            volume.type === 'Volume.Docker'
-              ? volume.volumeName
-              : volume.directory
-          }:${containerPath}`
+          `${volume.type === 'Volume.Docker' ? volume.volumeName : volume.directory}:${containerPath}`
         );
         opts.Volumes[containerPath.split(':')[0]] = {};
       }
     }
 
-    // console.log(opts);
+    if (process.env.DEBUG) {
+      console.log(opts);
+    }
 
     const info = await client.containers.create(opts);
     await client.containers.start(info.Id);
-
     return info;
   },
 
-  destroy: async (
-    client: DockerClient,
-    service: ClusterState.Service
-  ): Promise<void> => {
+  destroy: async (client: DockerClient, service: ClusterState.Service): Promise<void> => {
     await client.containers.remove(service.info.Id, { force: true });
   },
 
-  start: async (
-    client: DockerClient,
-    service: ClusterState.Service
-  ): Promise<void> => {
+  start: async (client: DockerClient, service: ClusterState.Service): Promise<void> => {
     await client.containers.start(service.info.Id);
   }
 };

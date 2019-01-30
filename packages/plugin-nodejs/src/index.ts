@@ -2,9 +2,7 @@ import path from 'path';
 import { ProjectBuilder } from '@clowdy/core';
 
 function parse(
-  args:
-    | [string, Partial<ProjectBuilder.ServiceOptions>?]
-    | [Partial<ProjectBuilder.ServiceOptions>?]
+  args: [string, Partial<ProjectBuilder.ServiceOptions>?] | [Partial<ProjectBuilder.ServiceOptions>?]
 ): {
   dirname: string;
   opts: Partial<ProjectBuilder.ServiceOptions>;
@@ -20,9 +18,7 @@ function parse(
     opts = args[0] || {};
   }
 
-  dirname = path.isAbsolute(dirname)
-    ? dirname
-    : path.resolve(process.cwd(), dirname);
+  dirname = path.isAbsolute(dirname) ? dirname : path.resolve(process.cwd(), dirname);
 
   return { dirname, opts };
 }
@@ -31,35 +27,21 @@ export function initialize(
   builder: ProjectBuilder
 ): {
   dev(name: string, opts?: Partial<ProjectBuilder.ServiceOptions>): void;
-  dev(
-    name: string,
-    dirname: string,
-    opts?: Partial<ProjectBuilder.ServiceOptions>
-  ): void;
+  dev(name: string, dirname: string, opts?: Partial<ProjectBuilder.ServiceOptions>): void;
   test(name: string, opts?: Partial<ProjectBuilder.ServiceOptions>): void;
-  test(
-    name: string,
-    dirname: string,
-    opts?: Partial<ProjectBuilder.ServiceOptions>
-  ): void;
+  test(name: string, dirname: string, opts?: Partial<ProjectBuilder.ServiceOptions>): void;
   prod(name: string, opts?: Partial<ProjectBuilder.ServiceOptions>): void;
-  prod(
-    name: string,
-    dirname: string,
-    opts?: Partial<ProjectBuilder.ServiceOptions>
-  ): void;
+  prod(name: string, dirname: string, opts?: Partial<ProjectBuilder.ServiceOptions>): void;
 } {
   return {
     dev(
       name: string,
-      ...args:
-        | [string, Partial<ProjectBuilder.ServiceOptions>?]
-        | [Partial<ProjectBuilder.ServiceOptions>?]
+      ...args: [string, Partial<ProjectBuilder.ServiceOptions>?] | [Partial<ProjectBuilder.ServiceOptions>?]
     ) {
       const { dirname, opts } = parse(args);
 
       builder.image(
-        'clowdy-plugin-nodejs-dev',
+        'com.awesome-labs.clowdy/plugin-nodejs-dev',
         path.resolve(__dirname, '..', 'clowdy-plugin-nodejs-dev')
       );
 
@@ -71,7 +53,7 @@ export function initialize(
           // YARN_CACHE_FOLDER: '/yarncache'
         },
         expose: opts.expose,
-        image: opts.image || 'clowdy-plugin-nodejs-dev',
+        image: opts.image || 'com.awesome-labs.clowdy/plugin-nodejs-dev',
         links: {
           ...opts.links
         },
@@ -86,14 +68,12 @@ export function initialize(
 
     test(
       name: string,
-      ...args:
-        | [string, Partial<ProjectBuilder.ServiceOptions>?]
-        | [Partial<ProjectBuilder.ServiceOptions>?]
+      ...args: [string, Partial<ProjectBuilder.ServiceOptions>?] | [Partial<ProjectBuilder.ServiceOptions>?]
     ) {
       const { dirname, opts } = parse(args);
 
       builder.image(
-        'clowdy-plugin-nodejs-dev',
+        'com.awesome-labs.clowdy/plugin-nodejs-dev',
         path.resolve(__dirname, '..', 'clowdy-plugin-nodejs-dev')
       );
 
@@ -105,7 +85,7 @@ export function initialize(
           // YARN_CACHE_FOLDER: '/yarncache'
         },
         expose: opts.expose,
-        image: opts.image || 'clowdy-plugin-nodejs-dev',
+        image: opts.image || 'com.awesome-labs.clowdy/plugin-nodejs-dev',
         links: {
           ...opts.links
         },
@@ -120,27 +100,14 @@ export function initialize(
 
     prod(
       name: string,
-      ...args:
-        | [string, Partial<ProjectBuilder.ServiceOptions>?]
-        | [Partial<ProjectBuilder.ServiceOptions>?]
+      ...args: [string, Partial<ProjectBuilder.ServiceOptions>?] | [Partial<ProjectBuilder.ServiceOptions>?]
     ) {
       const { dirname, opts } = parse(args);
-      const imageName = `${
-        builder.project.name
-      }_${name}_clowdy-plugin-nodejs-prod`;
+      const imageName = `${builder.project.name}_${name}_clowdy-plugin-nodejs-prod`;
 
-      builder.image(
-        imageName,
-        path.resolve(
-          __dirname,
-          '..',
-          'clowdy-plugin-nodejs-prod',
-          'Dockerfile'
-        ),
-        {
-          context: dirname
-        }
-      );
+      builder.image(imageName, path.resolve(__dirname, '..', 'clowdy-plugin-nodejs-prod', 'Dockerfile'), {
+        context: dirname
+      });
 
       builder.service(name, 'prod', {
         command: opts.command || ['yarn', 'start'],

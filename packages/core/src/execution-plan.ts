@@ -10,9 +10,7 @@ function shouldDestroy<
   const blueprintByName = lodash.keyBy(blueprint, 'name');
 
   const destroy = state.filter(i => !blueprintByName[i.name]);
-  const change = state.filter(
-    i => blueprintByName[i.name] && blueprintByName[i.name].hash !== i.hash
-  );
+  const change = state.filter(i => blueprintByName[i.name] && blueprintByName[i.name].hash !== i.hash);
 
   return [...destroy, ...change];
 }
@@ -26,37 +24,10 @@ function shouldCreate<
 
   const create = blueprint.filter(i => !stateByName[i.name]);
   const change = state
-    .filter(
-      i => blueprintByName[i.name] && blueprintByName[i.name].hash !== i.hash
-    )
+    .filter(i => blueprintByName[i.name] && blueprintByName[i.name].hash !== i.hash)
     .map(i => blueprintByName[i.name]);
 
   return [...create, ...change];
-}
-
-function diff<
-  TClusterState extends { hash: string; name: string },
-  TBlueprint extends { hash: string; name: string }
->(
-  state: TClusterState[],
-  blueprint: TBlueprint[]
-): {
-  change: (TBlueprint & TClusterState)[];
-  create: TBlueprint[];
-  destroy: TClusterState[];
-} {
-  const stateByName = lodash.keyBy(state, 'name');
-  const blueprintByName = lodash.keyBy(blueprint, 'name');
-
-  return {
-    change: state
-      .filter(
-        i => blueprintByName[i.name] && blueprintByName[i.name].hash !== i.hash
-      )
-      .map(i => Object.assign({}, i, blueprintByName[i.name])),
-    create: blueprint.filter(i => !stateByName[i.name]),
-    destroy: state.filter(i => !blueprintByName[i.name])
-  };
 }
 
 export interface ExecutionPlan {
@@ -67,14 +38,6 @@ export interface ExecutionPlan {
 export class ExecutionPlan {
   static from(state: ClusterState, blueprint: Blueprint): ExecutionPlan {
     state = lodash.cloneDeep(state);
-
-    const diffs = {
-      images: diff(state.images, blueprint.images),
-      // networks: diff(state.networks, blueprint.networks),
-      proxies: diff(state.proxies, blueprint.proxies),
-      services: diff(state.services, blueprint.services),
-      volumes: diff(state.volumes, blueprint.volumes)
-    };
 
     const actions: ExecutionPlan.Action[] = [];
 
@@ -89,22 +52,19 @@ export class ExecutionPlan {
 
     const destroyProxies = shouldDestroy(state.proxies, blueprint.proxies);
     actions.push(...destroyProxies.map(ExecutionPlan.Action.Proxy.destroy));
-    state.proxies = state.proxies.filter(
-      p => !destroyProxies.find(dp => dp.name === p.name)
-    );
+    state.proxies = state.proxies.filter(p => !destroyProxies.find(dp => dp.name === p.name));
 
     // services
     // actions.push(
     //   ...[...diffs.services.destroy, ...diffs.services.change].map(
     //     ExecutionPlan.Action.Service.destroy
     //   )
+
     // );
 
     const destroyServices = shouldDestroy(state.services, blueprint.services);
     actions.push(...destroyServices.map(ExecutionPlan.Action.Service.destroy));
-    state.services = state.services.filter(
-      s => !destroyServices.find(ds => ds.name === s.name)
-    );
+    state.services = state.services.filter(s => !destroyServices.find(ds => ds.name === s.name));
 
     // volumes
     // actions.push(
@@ -113,9 +73,7 @@ export class ExecutionPlan {
 
     const destroyVolumes = shouldDestroy(state.volumes, blueprint.volumes);
     actions.push(...destroyVolumes.map(ExecutionPlan.Action.Volume.destroy));
-    state.volumes = state.volumes.filter(
-      v => !destroyVolumes.find(dv => dv.name === v.name)
-    );
+    state.volumes = state.volumes.filter(v => !destroyVolumes.find(dv => dv.name === v.name));
 
     // images
     // actions.push(
@@ -126,9 +84,7 @@ export class ExecutionPlan {
 
     const destroyImages = shouldDestroy(state.images, blueprint.images);
     actions.push(...destroyImages.map(ExecutionPlan.Action.Image.destroy));
-    state.images = state.images.filter(
-      i => !destroyImages.find(di => di.name === i.name)
-    );
+    state.images = state.images.filter(i => !destroyImages.find(di => di.name === i.name));
 
     // networks
     // actions.push(
@@ -153,12 +109,21 @@ export class ExecutionPlan {
     //   )
     // );
 
-    const createImages = shouldCreate(state.images, blueprint.images);
-    actions.push(...createImages.map(ExecutionPlan.Action.Image.build));
+    const buildImages = shouldCreate(state.images, blueprint.images);
 
-    actions.push(
-      ...blueprint.externalImages.map(ExecutionPlan.Action.Image.pull)
-    );
+    // for (const image of blueprint.images) {
+    //   image;
+    // }
+
+    actions.push(...buildImages.map(ExecutionPlan.Action.Image.build));
+
+    for (const image of blueprint.otherImages) {
+      if (!state.otherImages.find(soi => (soi.RepoTags || []).indexOf(image) !== -1)) {
+        actions.push(ExecutionPlan.Action.Image.pull(image));
+      }
+    }
+
+    // actions.push(...blueprint.externalImages.map(ExecutionPlan.Action.Image.pull));
 
     // volumes
     // actions.push(
@@ -182,32 +147,19 @@ export class ExecutionPlan {
     // };
 
     const ServiceCreateStartOrder = (
-      l:
-        | ExecutionPlan.Action.Service.Create
-        | ExecutionPlan.Action.Service.Start,
-      r:
-        | ExecutionPlan.Action.Service.Create
-        | ExecutionPlan.Action.Service.Start
+      l: ExecutionPlan.Action.Service.Create | ExecutionPlan.Action.Service.Start,
+      r: ExecutionPlan.Action.Service.Create | ExecutionPlan.Action.Service.Start
     ) => {
-      if (
-        Object.values(r.payload.service.schematic.links).indexOf(
-          l.payload.service.name
-        ) !== -1
-      ) {
+      if (Object.values(r.payload.service.schematic.links).indexOf(l.payload.service.name) !== -1) {
         return -1;
-      } else if (
-        Object.values(l.payload.service.schematic.links).indexOf(
-          r.payload.service.name
-        ) !== -1
-      ) {
+      } else if (Object.values(l.payload.service.schematic.links).indexOf(r.payload.service.name) !== -1) {
         return 1;
       }
       return 0;
     };
 
     const createServices = shouldCreate(state.services, blueprint.services);
-    const stoppedServices: (ClusterState.Service &
-      Blueprint.Service)[] = state.services
+    const stoppedServices: (ClusterState.Service & Blueprint.Service)[] = state.services
       .filter(s => !s.info.State.Running)
       .map(s => ({
         ...s,
@@ -310,9 +262,7 @@ export namespace ExecutionPlan {
         resource: 'Network',
         type: 'Create'
       });
-      export const destroy = (
-        network: ClusterState.Network
-      ): Network.Destroy => ({
+      export const destroy = (network: ClusterState.Network): Network.Destroy => ({
         payload: { network },
         resource: 'Network',
         type: 'Destroy'
@@ -365,16 +315,12 @@ export namespace ExecutionPlan {
         resource: 'Service',
         type: 'Create'
       });
-      export const destroy = (
-        service: ClusterState.Service
-      ): Service.Destroy => ({
+      export const destroy = (service: ClusterState.Service): Service.Destroy => ({
         payload: { service },
         resource: 'Service',
         type: 'Destroy'
       });
-      export const start = (
-        service: ClusterState.Service & Blueprint.Service
-      ): Service.Start => ({
+      export const start = (service: ClusterState.Service & Blueprint.Service): Service.Start => ({
         payload: { service },
         resource: 'Service',
         type: 'Start'
@@ -407,10 +353,5 @@ export namespace ExecutionPlan {
     export type Volume = Volume.Create | Volume.Destroy;
   }
 
-  export type Action =
-    | Action.Image
-    | Action.Network
-    | Action.Proxy
-    | Action.Service
-    | Action.Volume;
+  export type Action = Action.Image | Action.Network | Action.Proxy | Action.Service | Action.Volume;
 }

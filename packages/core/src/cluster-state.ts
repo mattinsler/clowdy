@@ -2,11 +2,13 @@ import Docker from 'dockerode';
 import { NetworkInspectInfo, VolumeInfo } from '@clowdy/docker';
 
 import { LABELS } from './labels';
+import { ImageTag } from './utils';
 import { dockerClient } from './utils';
 import { Schematic } from './schematic';
 
 export interface ClusterState {
   images: ClusterState.Image[];
+  otherImages: ClusterState.OtherImage[];
   networks: ClusterState.Network[];
   project: string;
   proxies: ClusterState.Proxy[];
@@ -18,6 +20,7 @@ export class ClusterState {
   static empty(project: string): ClusterState {
     return {
       images: [],
+      otherImages: [],
       networks: [],
       project,
       proxies: [],
@@ -26,18 +29,10 @@ export class ClusterState {
     };
   }
 
-  static async from(
-    cluster: Schematic.Cluster,
-    project: string
-  ): Promise<ClusterState> {
+  static async from(cluster: Schematic.Cluster, project: string): Promise<ClusterState> {
     const client = dockerClient(cluster);
 
-    const [
-      containerInfos,
-      networkInfos,
-      imageInfos,
-      volumeInfos
-    ] = await Promise.all([
+    const [containerInfos, networkInfos, imageInfos, volumeInfos] = await Promise.all([
       client.containers.listAndInspect({
         all: true,
         filters: { label: { [LABELS.project]: project } }
@@ -45,21 +40,26 @@ export class ClusterState {
       client.networks.list({
         filters: { label: { [LABELS.project]: project } }
       }),
-      client.images.listAndInspect({
-        filters: { label: { [LABELS.project]: project } }
+      client.images.list({
+        // filters: { label: { [LABELS.project]: project } }
       }),
       client.volumes.list({
         filters: { label: { [LABELS.project]: project } }
       })
     ]);
 
-    const images: ClusterState.Image[] = imageInfos.map(
-      ClusterState.Image.from
-    );
+    const images: ClusterState.Image[] = [];
+    const otherImages: ClusterState.OtherImage[] = [];
 
-    const networks: ClusterState.Network[] = networkInfos.map(
-      ClusterState.Network.from
-    );
+    for (const info of imageInfos) {
+      if ((info.Labels || {})[LABELS.project] === project) {
+        images.push(ClusterState.Image.from(info));
+      } else {
+        otherImages.push({ ...info, tags: (info.RepoTags || []).map(ImageTag.parse) });
+      }
+    }
+
+    const networks: ClusterState.Network[] = networkInfos.map(ClusterState.Network.from);
 
     const proxies: ClusterState.Proxy[] = containerInfos
       .filter(info => info.Config.Labels[LABELS.type] === 'Proxy')
@@ -69,12 +69,11 @@ export class ClusterState {
       .filter(info => info.Config.Labels[LABELS.type] === 'Service')
       .map(ClusterState.Service.from);
 
-    const volumes: ClusterState.Volume[] = volumeInfos.map(
-      ClusterState.Volume.from
-    );
+    const volumes: ClusterState.Volume[] = volumeInfos.map(ClusterState.Volume.from);
 
     return {
       images,
+      otherImages,
       networks,
       project,
       proxies,
@@ -102,18 +101,22 @@ function extractPorts(info: Docker.ContainerInspectInfo): number[] {
 
 export namespace ClusterState {
   export interface Image extends State<'Image'> {
-    info: Docker.ImageInspectInfo;
+    info: Docker.ImageInfo;
+    tags: ImageTag[];
   }
   export namespace Image {
-    export const from = (
-      info: Docker.ImageInspectInfo
-    ): ClusterState.Image => ({
-      hash: info.Config.Labels[LABELS.hash],
+    export const from = (info: Docker.ImageInfo): ClusterState.Image => ({
+      hash: info.Labels[LABELS.hash],
       info,
-      name: info.Config.Labels[LABELS.name],
-      project: info.Config.Labels[LABELS.project],
-      resource: 'Image'
+      name: info.Labels[LABELS.name],
+      project: info.Labels[LABELS.project],
+      resource: 'Image',
+      tags: info.RepoTags.map(ImageTag.parse)
     });
+  }
+
+  export interface OtherImage extends Docker.ImageInfo {
+    tags: ImageTag[];
   }
 
   export interface Network extends State<'Network'> {
@@ -135,9 +138,7 @@ export namespace ClusterState {
     ports: number[];
   }
   export namespace Proxy {
-    export const from = (
-      info: Docker.ContainerInspectInfo
-    ): ClusterState.Proxy => ({
+    export const from = (info: Docker.ContainerInspectInfo): ClusterState.Proxy => ({
       expose: JSON.parse(info.Config.Labels[LABELS.expose]),
       hash: info.Config.Labels[LABELS.hash],
       info,
@@ -153,9 +154,7 @@ export namespace ClusterState {
     mode: Schematic.Mode;
   }
   export namespace Service {
-    export const from = (
-      info: Docker.ContainerInspectInfo
-    ): ClusterState.Service => ({
+    export const from = (info: Docker.ContainerInspectInfo): ClusterState.Service => ({
       hash: info.Config.Labels[LABELS.hash],
       info,
       mode: info.Config.Labels[LABELS.mode] as any,

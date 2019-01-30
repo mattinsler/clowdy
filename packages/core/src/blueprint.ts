@@ -1,5 +1,6 @@
 import ObjectHash from 'object-hash';
 
+import { ImageTag } from './utils';
 import { Loadout } from './loadout';
 import { Project } from './project';
 import { Execution } from './execution';
@@ -15,7 +16,7 @@ type Resource<ResourceType extends string> = {
 
 export interface Blueprint {
   images: Blueprint.Image[];
-  externalImages: string[];
+  otherImages: string[];
   networks: Blueprint.Network[];
   project: string;
   proxies: Blueprint.Proxy[];
@@ -24,10 +25,7 @@ export interface Blueprint {
 }
 
 export class Blueprint {
-  private static serviceSchematicsWithDependencies(
-    project: Project,
-    loadout: Loadout
-  ): Schematic.Service[] {
+  private static serviceSchematicsWithDependencies(project: Project, loadout: Loadout): Schematic.Service[] {
     const serviceMap: {
       [name: string]: Schematic.Service;
     } = loadout.services.reduce((o, name) => {
@@ -47,9 +45,7 @@ export class Blueprint {
             if (project.services.has(`prod|${target}`)) {
               serviceMap[target] = project.services.get(`prod|${target}`);
             } else {
-              throw new Error(
-                `Cannot find a linked service named ${target} in prod mode.`
-              );
+              throw new Error(`Cannot find a linked service named ${target} in prod mode.`);
             }
           }
         }
@@ -63,32 +59,25 @@ export class Blueprint {
     return Object.values(serviceMap);
   }
 
-  static from(
-    project: Project,
-    loadout: Loadout,
-    state?: ClusterState
-  ): Blueprint {
+  static from(project: Project, loadout: Loadout, state?: ClusterState): Blueprint {
     const images: { [name: string]: Blueprint.Image } = {};
-    const externalImages = new Set<string>();
+    const otherImages = new Set<string>();
     const networks: { [name: string]: Blueprint.Network } = {};
     const proxies: { [name: string]: Blueprint.Proxy } = {};
     const services: { [name: string]: Blueprint.Service } = {};
     const volumes: { [name: string]: Blueprint.Volume } = {};
 
-    const serviceSchematics = this.serviceSchematicsWithDependencies(
-      project,
-      loadout
-    );
+    const serviceSchematics = this.serviceSchematicsWithDependencies(project, loadout);
 
     for (const service of serviceSchematics) {
       services[service.name] = Blueprint.Service.from(service, project.name);
-      if (project.images.has(service.image)) {
-        images[service.image] = Blueprint.Image.from(
-          project.images.get(service.image),
-          project.name
-        );
+
+      const imageName = ImageTag.parse(service.image).name;
+
+      if (project.images.has(imageName)) {
+        images[service.image] = Blueprint.Image.from(project.images.get(imageName), project.name);
       } else {
-        externalImages.add(service.image);
+        otherImages.add(service.image);
       }
 
       for (const volume of Object.values(service.volumes)) {
@@ -103,13 +92,9 @@ export class Blueprint {
       if (expose) {
         if (Blueprint.Proxy.portsToExpose(service, expose).length > 0) {
           // has ports to expose
-          proxies[service.name] = Blueprint.Proxy.from(
-            service,
-            expose,
-            project.name
-          );
+          proxies[service.name] = Blueprint.Proxy.from(service, expose, project.name);
 
-          externalImages.add(Execution.Proxy.IMAGE);
+          otherImages.add(Execution.Proxy.IMAGE);
         }
       }
     }
@@ -120,7 +105,7 @@ export class Blueprint {
 
     return {
       images: Object.values(images),
-      externalImages: Array.from(externalImages),
+      otherImages: Array.from(otherImages),
       networks: Object.values(networks),
       project: project.name,
       proxies: Object.values(proxies),
@@ -199,11 +184,7 @@ export namespace Blueprint {
     schematic: Schematic.Service;
   }
   export class Proxy {
-    static from(
-      schematic: Schematic.Service,
-      expose: 'all' | number[],
-      project: string
-    ): Proxy {
+    static from(schematic: Schematic.Service, expose: 'all' | number[], project: string): Proxy {
       const config: Proxy.Config = {
         expose,
         network: `${project}_default`,
@@ -220,13 +201,8 @@ export namespace Blueprint {
       };
     }
 
-    static portsToExpose(
-      schematic: Schematic.Service,
-      expose: 'all' | number[]
-    ): number[] {
-      return expose === 'all'
-        ? schematic.expose
-        : expose.filter(port => schematic.expose.indexOf(port) !== -1);
+    static portsToExpose(schematic: Schematic.Service, expose: 'all' | number[]): number[] {
+      return expose === 'all' ? schematic.expose : expose.filter(port => schematic.expose.indexOf(port) !== -1);
     }
   }
 

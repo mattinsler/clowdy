@@ -1,6 +1,6 @@
 {
   "name": "@clowdy/cli",
-  "version": "0.0.5",
+  "version": "0.1.1",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "license": "MIT",
@@ -13,7 +13,7 @@
     "clowdy": "./bin/run"
   },
   "dependencies": {
-    "@clowdy/core": "0.0.4",
+    "@clowdy/core": "0.1.1",
     "@oclif/command": "1.5.8",
     "@oclif/config": "1.10.4",
     "@oclif/plugin-help": "2.1.4",
