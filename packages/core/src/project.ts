@@ -45,11 +45,8 @@ export namespace ProjectBuilder {
     cwd?: string;
     environment?: { [key: string]: string };
     expose?: number[];
-    // hooks?: { [name: string]: string };
     image: string;
     links?: { [alias: string]: string };
-    // ports?: { [externalPort: string]: string | number };
-    // scripts?: { [name: string]: string };
     volumes?: { [containerPath: string]: Schematic.Volume | string };
   }
 }

@@ -212,7 +212,6 @@ export async function master(cwd: string, argv: string[]) {
 
     fileWatcher.on('ready', () => {
       fileWatcher.on('all', (type: string, filename: string) => {
-        console.log({ type, filename });
         if (~['add', 'change', 'unlink', 'addDir', 'unlinkDir'].indexOf(type)) {
           worker.restart();
         }

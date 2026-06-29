@@ -67,8 +67,6 @@ export const Proxy = {
       }
     });
 
-    // console.log(createHaproxyConfig(proxy.name, proxy.config.ports));
-
     const buffer = await new Promise<Buffer>(resolve => {
       const pack = tar.pack();
       pack.entry(

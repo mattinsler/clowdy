@@ -44,77 +44,29 @@ export class ExecutionPlan {
     // DESTROY //
 
     // proxies
-    // actions.push(
-    //   ...[...diffs.proxies.destroy, ...diffs.proxies.change].map(
-    //     ExecutionPlan.Action.Proxy.destroy
-    //   )
-    // );
-
     const destroyProxies = shouldDestroy(state.proxies, blueprint.proxies);
     actions.push(...destroyProxies.map(ExecutionPlan.Action.Proxy.destroy));
     state.proxies = state.proxies.filter(p => !destroyProxies.find(dp => dp.name === p.name));
 
     // services
-    // actions.push(
-    //   ...[...diffs.services.destroy, ...diffs.services.change].map(
-    //     ExecutionPlan.Action.Service.destroy
-    //   )
-
-    // );
-
     const destroyServices = shouldDestroy(state.services, blueprint.services);
     actions.push(...destroyServices.map(ExecutionPlan.Action.Service.destroy));
     state.services = state.services.filter(s => !destroyServices.find(ds => ds.name === s.name));
 
     // volumes
-    // actions.push(
-    //   ...diffs.volumes.destroy.map(ExecutionPlan.Action.Volume.destroy)
-    // );
-
     const destroyVolumes = shouldDestroy(state.volumes, blueprint.volumes);
     actions.push(...destroyVolumes.map(ExecutionPlan.Action.Volume.destroy));
     state.volumes = state.volumes.filter(v => !destroyVolumes.find(dv => dv.name === v.name));
 
     // images
-    // actions.push(
-    //   ...[...diffs.images.destroy, ...diffs.images.change].map(
-    //     ExecutionPlan.Action.Image.destroy
-    //   )
-    // );
-
     const destroyImages = shouldDestroy(state.images, blueprint.images);
     actions.push(...destroyImages.map(ExecutionPlan.Action.Image.destroy));
     state.images = state.images.filter(i => !destroyImages.find(di => di.name === i.name));
 
-    // networks
-    // actions.push(
-    //   ...[...diffs.networks.destroy, ...diffs.networks.change].map(
-    //     ExecutionPlan.Action.Network.destroy
-    //   )
-    // );
-
     // CREATE //
 
-    // networks
-    // actions.push(
-    //   ...[...diffs.networks.change, ...diffs.networks.create].map(
-    //     ExecutionPlan.Action.Network.create
-    //   )
-    // );
-
     // images
-    // actions.push(
-    //   ...[...diffs.images.change, ...diffs.images.create].map(
-    //     ExecutionPlan.Action.Image.build
-    //   )
-    // );
-
     const buildImages = shouldCreate(state.images, blueprint.images);
-
-    // for (const image of blueprint.images) {
-    //   image;
-    // }
-
     actions.push(...buildImages.map(ExecutionPlan.Action.Image.build));
 
     for (const image of blueprint.otherImages) {
@@ -123,29 +75,11 @@ export class ExecutionPlan {
       }
     }
 
-    // actions.push(...blueprint.externalImages.map(ExecutionPlan.Action.Image.pull));
-
     // volumes
-    // actions.push(
-    //   ...diffs.volumes.create.map(ExecutionPlan.Action.Volume.create)
-    // );
-
     const createVolumes = shouldCreate(state.volumes, blueprint.volumes);
     actions.push(...createVolumes.map(ExecutionPlan.Action.Volume.create));
 
-    //services
-    // const SortServiceStartOrder = (
-    //   l: Blueprint.Service,
-    //   r: Blueprint.Service
-    // ) => {
-    //   if (Object.values(r.schematic.links).indexOf(l.name) !== -1) {
-    //     return -1;
-    //   } else if (Object.values(l.schematic.links).indexOf(r.name) !== -1) {
-    //     return 1;
-    //   }
-    //   return 0;
-    // };
-
+    // services
     const ServiceCreateStartOrder = (
       l: ExecutionPlan.Action.Service.Create | ExecutionPlan.Action.Service.Start,
       r: ExecutionPlan.Action.Service.Create | ExecutionPlan.Action.Service.Start
@@ -173,33 +107,7 @@ export class ExecutionPlan {
       ].sort(ServiceCreateStartOrder)
     );
 
-    // const stoppedServices = state.services.filter(s => !s.info.State.Running);
-    // const stoppedServiceNames = new Set(stoppedServices.map(s => s.name));
-
-    // for (const service of [
-    //   ...diffs.services.change,
-    //   ...diffs.services.create,
-    //   ...blueprint.services.filter(s => stoppedServiceNames.has(s.name))
-    // ].sort(SortServiceStartOrder)) {
-    //   if (stoppedServiceNames.has(service.name)) {
-    //     actions.push(
-    //       ExecutionPlan.Action.Service.start({
-    //         ...stoppedServices.find(s => s.name === service.name),
-    //         ...service
-    //       })
-    //     );
-    //   } else {
-    //     actions.push(ExecutionPlan.Action.Service.create(service));
-    //   }
-    // }
-
     // proxies
-    // actions.push(
-    //   ...[...diffs.proxies.change, ...diffs.proxies.create].map(
-    //     ExecutionPlan.Action.Proxy.create
-    //   )
-    // );
-
     const createProxies = shouldCreate(state.proxies, blueprint.proxies);
     actions.push(...createProxies.map(ExecutionPlan.Action.Proxy.create));
 

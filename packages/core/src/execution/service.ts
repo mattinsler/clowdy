@@ -63,33 +63,8 @@ export const Service = {
     }
 
     if (Object.keys(service.config.links).length > 0) {
-      // const targetContainers: {
-      //   [name: string]: Docker.ContainerInspectInfo;
-      // } = (await client.containers.listAndInspect({
-      //   filters: {
-      //     label: {
-      //       [LABELS.name]: Object.values(service.config.links),
-      //       [LABELS.project]: service.project,
-      //       [LABELS.type]: 'Service'
-      //     }
-      //   }
-      // })).reduce((o, c) => {
-      //   o[c.Config.Labels[LABELS.name]] = c;
-      //   return o;
-      // }, {});
-
-      // opts.HostConfig.ExtraHosts = Object.entries(service.config.links).map(
-      //   ([alias, target]) =>
-      //     `${alias}:${
-      //       targetContainers[target].NetworkSettings.Networks[
-      //         service.config.network
-      //       ].IPAddress
-      //     }`
-      // );
-
       opts.HostConfig.Links = Object.entries(service.config.links).map(
         ([alias, target]) => `${service.project}_${target}:${alias}`
-        // `${targetContainers[target].Name.replace(/^\/+/, '')}:${alias}`
       );
     }
 

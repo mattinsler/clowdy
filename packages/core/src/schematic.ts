@@ -32,25 +32,7 @@ export namespace Schematic {
     dockerfile: string;
   }
 
-  // export interface Link {
-  //   type: 'Link';
-  //   alias: string;
-  //   target: string;
-  // }
-
   export type Mode = 'dev' | 'prod' | 'test';
-
-  // export interface Script {
-  //   type: 'Script';
-  //   name: string;
-  //   command: string | string[];
-  //   environment: { [key: string]: string };
-  //   image: string;
-  //   links: Link[];
-  //   volumes: {
-  //     [containerPath: string]: Volume;
-  //   };
-  // }
 
   export interface Service {
     type: 'Service';
@@ -69,23 +51,11 @@ export namespace Schematic {
     };
     mode: Mode;
     name: string;
-    // ports: {
-    //   [externalPort: string]: string;
-    // };
     volumes: {
       // container path => volume schematic
       [containerPath: string]: Volume;
     };
-
-    // scripts: { [name: string]: string };
-    // hooks: { [name: string]: string };
   }
-
-  // export interface ServiceGroup {
-  //   type: 'ServiceGroup';
-  //   name: string;
-  //   services: string[];
-  // }
 
   export namespace Volume {
     export interface Docker {

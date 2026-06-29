@@ -1,5 +1,4 @@
 {
-  "exclude": ["commands.old"],
   "extends": "../tsconfig.settings.json",
   "compilerOptions": {
     "esModuleInterop": true,

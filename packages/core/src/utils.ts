@@ -3,8 +3,6 @@ import dockerParseImage from 'docker-parse-image';
 
 import { Schematic } from './schematic';
 
-// export const followProgress = ClowdyDocker.followProgress;
-
 export function dockerClient(cluster: Schematic.Cluster): ClowdyDocker.DockerClient {
   switch (cluster.type) {
     case 'Cluster.Local':
